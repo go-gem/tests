@@ -3,7 +3,7 @@
 // that can be found in the LICENSE file.
 
 /*
-Package test provides simple APIs to test you web server,
+Package tests provides simple APIs to test you web server,
 only support servers which based fasthttp.
 
 Example
