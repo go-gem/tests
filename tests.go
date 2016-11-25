@@ -191,7 +191,7 @@ func (t *Test) Run() (err error) {
 	}
 
 	if err = resp.Read(br); err != nil {
-		return fmt.Errorf("UnExpected error when reading response: %s", err)
+		return fmt.Errorf("Unexpected error when reading response: %s", err)
 	}
 	if err = t.expect.check(resp); err != nil {
 		return

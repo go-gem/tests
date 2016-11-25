@@ -6,7 +6,7 @@ such as [Gem](https://github.com/go-gem/gem).
 ## Install
 
 ```
-go get github.com/go-gem/gem
+go get github.com/go-gem/tests
 ```
 
 

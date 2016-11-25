@@ -7,6 +7,7 @@ package tests
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/valyala/fasthttp"
 )
@@ -15,6 +16,12 @@ var (
 	contextType = "text/html; charset=utf-8"
 	statusCode  = fasthttp.StatusBadRequest
 	respBody    = fasthttp.StatusMessage(fasthttp.StatusBadRequest)
+
+	// header
+	headerKey   = "Custom-Header"
+	headerValue = "tests"
+
+	// cookie
 	cookie      = &fasthttp.Cookie{}
 	cookieKey   = "GOSESSION"
 	cookieValue = "GOSESSION_VALUE"
@@ -44,6 +51,14 @@ func init() {
 	cookie.SetValue(cookieValue)
 
 	srv.Handler = func(ctx *fasthttp.RequestCtx) {
+		if string(ctx.Path()) == "/timeout" {
+			time.Sleep(time.Millisecond * 200)
+		}
+
+		if len(ctx.Request.Header.Peek(headerKey)) > 0 {
+			ctx.Response.Header.SetBytesV(headerKey, ctx.Request.Header.Peek(headerKey))
+		}
+
 		ctx.SetStatusCode(statusCode)
 		ctx.SetContentType(contextType)
 		ctx.SetBodyString(respBody)
@@ -101,6 +116,28 @@ func init() {
 			},
 		},
 	})
+
+	// Test custom request header
+	testParams = append(testParams, param{
+		reqHeaders: map[string]string{
+			headerKey: headerValue,
+		},
+		expectCustoms: []Func{
+			func(resp fasthttp.Response) error {
+				bytesHeader := resp.Header.Peek(headerKey)
+				if len(bytesHeader) == 0 || string(bytesHeader) != headerValue {
+					return fmt.Errorf("Expect header named %s: %q, got %q", headerKey, headerValue, bytesHeader)
+				}
+				return nil
+			},
+		},
+	})
+
+	// Test timeout
+	testParams = append(testParams, param{
+		reqUrl:    "/timeout",
+		expectErr: true,
+	})
 }
 
 func TestAll(t *testing.T) {
@@ -126,7 +163,7 @@ func initTest(test *Test, param *param) {
 		test.Method = param.reqMethod
 	}
 	if param.reqUrl != "" {
-		test.Method = param.reqUrl
+		test.Url = param.reqUrl
 	}
 	if param.reqProtocol != "" {
 		test.Protocol = param.reqProtocol
