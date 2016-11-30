@@ -154,7 +154,7 @@ func New(server server) *Test {
 	return &Test{
 		server:  server,
 		rw:      &readWriter{},
-		Timeout: 100 * time.Microsecond,
+		Timeout: 200 * time.Microsecond,
 
 		Url:      "/",
 		Method:   "GET",
