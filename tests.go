@@ -98,7 +98,7 @@ func (e *Expect) check(resp fasthttp.Response) (err error) {
 func (e *Expect) Status(code int) *Expect {
 	return e.Custom(func(resp fasthttp.Response) error {
 		if resp.StatusCode() != code {
-			return fmt.Errorf("Expected status code %d, got %d", code, resp.StatusCode())
+			return fmt.Errorf("expected status code %d, got %d", code, resp.StatusCode())
 		}
 
 		return nil
@@ -109,7 +109,7 @@ func (e *Expect) Status(code int) *Expect {
 func (e *Expect) Body(body string) *Expect {
 	return e.Custom(func(resp fasthttp.Response) error {
 		if string(resp.Body()) != body {
-			return fmt.Errorf("Expected response body %q, got %q", body, resp.Body())
+			return fmt.Errorf("expected response body %q, got %q", body, resp.Body())
 		}
 
 		return nil
@@ -121,14 +121,19 @@ func (e *Expect) Header(key, value string) *Expect {
 	return e.Custom(func(resp fasthttp.Response) error {
 		v := resp.Header.Peek(key)
 		if string(v) != value {
-			return fmt.Errorf("Expected response header named %s: %q, got %q", key, value, v)
+			return fmt.Errorf("expected response header named %s: %q, got %q", key, value, v)
 		}
 
 		return nil
 	})
 }
 
-//
+// Rest reset expected result.
+func (e *Expect) Rest() *Expect {
+	*e = (*e)[:0]
+	return e
+}
+
 type server interface {
 	ServeConn(net.Conn) error
 }
@@ -149,20 +154,41 @@ type Test struct {
 	expect *Expect
 }
 
+var (
+	defaultMethod   = "GET"
+	defaultUrl      = "/"
+	defaultProtocol = "HTTP/1.1"
+	defaultTimeout  = 200 * time.Microsecond
+)
+
 // New returns a Test instance with default configuration.
-func New(server server) *Test {
-	return &Test{
+func New(server server, args ...string) *Test {
+	t := &Test{
 		server:  server,
 		rw:      &readWriter{},
-		Timeout: 200 * time.Microsecond,
+		Timeout: defaultTimeout,
 
-		Url:      "/",
-		Method:   "GET",
-		Protocol: "",
+		Url:      defaultUrl,
+		Method:   defaultMethod,
+		Protocol: defaultProtocol,
 		Headers:  make(map[string]string),
 
 		expect: new(Expect),
 	}
+
+	argsCount := len(args)
+	switch argsCount {
+	case 3:
+		t.Protocol = args[2]
+		fallthrough
+	case 2:
+		t.Method = args[1]
+		fallthrough
+	case 1:
+		t.Url = args[0]
+	}
+
+	return t
 }
 
 var (
@@ -191,7 +217,7 @@ func (t *Test) Run() (err error) {
 	}
 
 	if err = resp.Read(br); err != nil {
-		return fmt.Errorf("Unexpected error when reading response: %s", err)
+		return fmt.Errorf("unexpected error when reading response: %s", err)
 	}
 	if err = t.expect.check(resp); err != nil {
 		return

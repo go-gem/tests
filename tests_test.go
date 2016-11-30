@@ -140,6 +140,50 @@ func init() {
 	})
 }
 
+func TestNew(t *testing.T) {
+	var s server
+
+	url := "/user"
+	method := "POST"
+	protocol := "HTTP/1.0"
+
+	var err error
+
+	test1 := New(s)
+	if err = check(test1, defaultUrl, defaultMethod, defaultProtocol); err != nil {
+		t.Error(err)
+	}
+
+	test2 := New(s, url)
+	if err = check(test2, url, defaultMethod, defaultProtocol); err != nil {
+		t.Error(err)
+	}
+
+	test3 := New(s, url, method)
+	if err = check(test3, url, method, defaultProtocol); err != nil {
+		t.Error(err)
+	}
+
+	test4 := New(s, url, method, protocol)
+	if err = check(test4, url, method, protocol); err != nil {
+		t.Error(err)
+	}
+}
+
+func check(t *Test, url, method, protocol string) error {
+	if t.Url != url {
+		return fmt.Errorf("expected url: %q, got %q", url, t.Url)
+	}
+	if t.Method != method {
+		return fmt.Errorf("expected method: %q, got %q", method, t.Method)
+	}
+	if t.Protocol != protocol {
+		return fmt.Errorf("expected protocol: %q, got %q", protocol, t.Protocol)
+	}
+
+	return nil
+}
+
 func TestAll(t *testing.T) {
 	var err error
 	for _, param := range testParams {
@@ -191,5 +235,15 @@ func initTest(test *Test, param *param) {
 		for _, f := range param.expectCustoms {
 			test.Expect().Custom(f)
 		}
+	}
+}
+
+func TestExpect_Rest(t *testing.T) {
+	e := new(Expect)
+	e.Status(fasthttp.StatusOK)
+
+	e.Rest()
+	if len(*e) != 0 {
+		t.Error("failed to reset Expect")
 	}
 }
