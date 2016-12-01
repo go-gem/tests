@@ -158,7 +158,9 @@ var (
 	defaultMethod   = "GET"
 	defaultUrl      = "/"
 	defaultProtocol = "HTTP/1.1"
-	defaultTimeout  = 200 * time.Microsecond
+
+	// DefaultTimeout
+	DefaultTimeout = 200 * time.Microsecond
 )
 
 // New returns a Test instance with default configuration.
@@ -166,7 +168,7 @@ func New(server server, args ...string) *Test {
 	t := &Test{
 		server:  server,
 		rw:      &readWriter{},
-		Timeout: defaultTimeout,
+		Timeout: DefaultTimeout,
 
 		Url:      defaultUrl,
 		Method:   defaultMethod,
